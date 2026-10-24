@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>麦麦暗号厨房 · McSecret Kitchen</title>
+<style>
+  :root{
+    --mcd-red:#DA291C; --mcd-yellow:#FFC72C; --ink:#1a1a1a;
+    --muted:#6b6b6b; --line:#e6e4df; --bg:#faf8f4; --card:#fff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  .wrap{max-width:780px;margin:0 auto;padding:28px 20px 60px}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  .logo{width:36px;height:36px;border-radius:9px;background:var(--mcd-red);
+    color:var(--mcd-yellow);display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:18px;flex:none}
+  h1{font-size:21px;margin:0;font-weight:650;letter-spacing:-.2px}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 22px 48px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:16px}
+  .warn{background:#fff8e6;border:1px solid #f0dfae;border-radius:10px;
+    padding:11px 14px;font-size:13px;color:#7a5c12;margin-bottom:16px}
+  .count{font-size:13px;color:var(--muted);margin-bottom:14px}
+  h2{font-size:15px;margin:0 0 12px;font-weight:600}
+  .code{border:1px solid var(--line);border-radius:12px;padding:15px 17px;margin-bottom:11px;background:#fffdf8}
+  .code .hd{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:5px}
+  .code .nm{font-size:14px;font-weight:650;color:var(--mcd-red)}
+  .code .desc{font-size:12px;color:var(--muted)}
+  .code .ttl{font-size:14px;margin-bottom:8px}
+  .code .sw{font-size:12px;color:var(--muted)}
+  .code .sw b{color:var(--ink);font-weight:500}
+  .meta{display:flex;gap:14px;font-size:13px;margin-top:9px}
+  .meta .p{font-weight:650}
+  .meta .k{color:var(--muted)}
+  ul{list-style:none;margin:0;padding:0}
+  li{display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:10px 0;border-bottom:1px solid #f0eee9;font-size:14px}
+  li:last-child{border-bottom:0}
+  .g{color:var(--muted);white-space:nowrap;font-size:13px}
+  .tabs{display:flex;gap:8px;margin-bottom:14px}
+  .tabs button{padding:7px 14px;border-radius:8px;border:1px solid var(--line);
+    background:#fff;font-size:13px;cursor:pointer;font-family:inherit}
+  .tabs button.on{background:var(--mcd-red);color:#fff;border-color:var(--mcd-red)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">麦</div>
+    <h1>麦麦暗号厨房</h1>
+  </header>
+  <p class="sub">菜单上不存在的搭配，这里全都有 · 基于麦当劳中国 MCP</p>
+
+  <div id="mockWarn" class="warn" style="display:none"></div>
+
+  <div class="card">
+    <h2>精选暗号</h2>
+    <div class="count" id="countText">加载中…</div>
+    <div id="featured"></div>
+  </div>
+
+  <div class="card">
+    <h2>全部组合</h2>
+    <div class="tabs">
+      <button class="on" data-tab="all">全部</button>
+      <button data-tab="cheapest">最便宜</button>
+      <button data-tab="lightest">最轻</button>
+    </div>
+    <ul id="list"></ul>
+  </div>
+</div>
+
+<script>
+let DATA = null;
+const $ = id => document.getElementById(id);
+
+async function load(){
+  const r = await fetch('/api/menu');
+  DATA = await r.json();
+  if (DATA._mock){
+    $('mockWarn').style.display = 'block';
+    $('mockWarn').textContent = DATA._error
+      ? 'MCP 调用失败：' + DATA._error
+      : '当前为演示模式（未设置 MCD_MCP_TOKEN），展示的是示例数据。';
+  }
+  render();
+}
+
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function money(c){
+  if (c.base_known) return c.price + ' 元';
+  if ((c.diff || 0) === 0) return '不加价';
+  return '+' + c.diff + ' 元';
+}
+function meta(c){
+  return money(c) + (c.kcal > 0 ? ' · ' + c.kcal + ' kcal' : '');
+}
+
+function render(){
+  const m = DATA.menu;
+  $('countText').textContent = '共组合出 ' + m.total + ' 种菜单上不存在的搭配';
+
+  const f = $('featured');
+  f.innerHTML = '';
+  m.featured.forEach(c=>{
+    const d = document.createElement('div');
+    d.className = 'code';
+    let swaps = c.swaps.map(s => '<span>换 <b>' + esc(s.from) + '</b> → <b>' + esc(s.to) + '</b></span>').join('　');
+    d.innerHTML =
+      '<div class="hd"><span class="nm">' + esc(c.code_name.name) + '</span>' +
+      '<span class="desc">' + esc(c.code_name.desc) + '</span></div>' +
+      '<div class="ttl">' + esc(c.title) + '</div>' +
+      '<div class="sw">' + swaps + '</div>' +
+      '<div class="meta"><span class="p">' + money(c) + '</span>' +
+      (c.kcal > 0 ? '<span class="k">' + c.kcal + ' kcal</span>' : '') + '</div>';
+    f.appendChild(d);
+  });
+
+  drawList('all');
+}
+
+function drawList(kind){
+  const ul = $('list');
+  ul.innerHTML = '';
+  (DATA.menu[kind] || []).forEach(c=>{
+    const li = document.createElement('li');
+    li.innerHTML = '<span>' + esc(c.title) + '</span>' +
+      '<span class="g">' + meta(c) + '</span>';
+    ul.appendChild(li);
+  });
+}
+
+document.querySelectorAll('.tabs button').forEach(b=>{
+  b.onclick = () => {
+    document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    drawList(b.dataset.tab);
+  };
+});
+
+load();
+</script>
+</body>
+</html>
