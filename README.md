@@ -98,6 +98,13 @@ mcd-secret-kitchen/
 - **字段模糊匹配**：`find_rows()` / `pick()` 兼容 MCP 各版本的字段命名差异，升级后无需改代码。
 - **绝不自动下单**：只做组合推荐，下单必须用户显式确认。
 
+## 联系作者
+
+- 参赛者：**oracis**（robin）
+- 邮箱：**oracis@gmail.com** —— 比赛相关事务（评审、发奖、技术沟通）请直接邮件联系
+- 同批次参赛作品：麦麦积分清仓官 · https://github.com/oracis/mcd-points-liquidator
+- 报名 Issue：[#1330](https://github.com/M-China/mcd-developer-innovation-challenge/issues/1330)
+
 ## 免责声明
 
 本项目是麦当劳程序员创意开发大赛参赛作品，由参赛者独立开发，**非麦当劳官方产品**。输出仅供参考，餐品信息、价格、供应状态与可替换选项以麦当劳官方渠道实时结果为准。Token 仅从环境变量读取，不包含在任何文件中。
